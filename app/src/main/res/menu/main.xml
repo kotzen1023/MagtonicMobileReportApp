@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+      xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item android:id="@+id/main_hide_or_show_keyboard"
+          android:title=""
+          android:icon="@drawable/baseline_keyboard_hide_white_36"
+          app:showAsAction="always"
+          android:visible="false"/>
+</menu>
