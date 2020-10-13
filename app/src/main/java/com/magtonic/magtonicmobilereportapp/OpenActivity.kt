@@ -9,6 +9,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
+import android.os.Looper
 //import android.support.constraint.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintLayout
 //import android.support.v4.app.ActivityCompat
@@ -52,7 +53,8 @@ class OpenActivity: AppCompatActivity() {
         //Thread.sleep(1000)
         //contraintLayout.startAnimation(animFadeOut)
 
-        Handler().postDelayed(
+        //Handler().postDelayed(
+        Handler(Looper.getMainLooper()).postDelayed(
             {
                 Log.e(mTag, "Handler().postDelayed")
                 loadFadeOut()
@@ -109,7 +111,7 @@ class OpenActivity: AppCompatActivity() {
         contraintLayout!!.startAnimation(animFadeOut)
         contraintLayout!!.visibility = View.GONE
 
-        Handler().postDelayed(
+        Handler(Looper.getMainLooper()).postDelayed(
             {
 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {

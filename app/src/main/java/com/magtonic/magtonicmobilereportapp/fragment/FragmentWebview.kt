@@ -1,22 +1,35 @@
 package com.magtonic.magtonicmobilereportapp.fragment
 
+
+
+import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+
+import android.graphics.Rect
 import android.os.Bundle
-//import android.support.v4.app.Fragment
-import androidx.fragment.app.Fragment
+
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.WebChromeClient
+import android.webkit.WebSettings
+
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.LinearLayout
+
+import android.widget.RelativeLayout
+import androidx.fragment.app.Fragment
 import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.currentMenuID
+import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.isKeyBoardShow
 import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.menuList
+import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.webviewProgressBar
 import com.magtonic.magtonicmobilereportapp.R
-
-
-
+import com.magtonic.magtonicmobilereportapp.data.Constants
 
 
 class FragmentWebview: Fragment()  {
@@ -28,6 +41,11 @@ class FragmentWebview: Fragment()  {
 
     private var webView: WebView? = null
 
+    private var relativeLayout: RelativeLayout? = null
+    private var linearLayout: LinearLayout? = null
+
+    //var progressBar: ProgressBar? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -36,6 +54,7 @@ class FragmentWebview: Fragment()  {
         webviewContext = context
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -45,16 +64,68 @@ class FragmentWebview: Fragment()  {
 
         val view = inflater.inflate(R.layout.fragment_webview, container, false)
 
-        webView = view.findViewById<WebView>(R.id.webView)
+        relativeLayout = view.findViewById(R.id.webview_container)
+        linearLayout = view.findViewById(R.id.linearLayoutWebView)
+
+        webviewProgressBar = view.findViewById(R.id.progressBar)
+
+
+        webView = view.findViewById(R.id.webView)
         val webSettings = webView!!.settings
-        webView!!.webViewClient= WebViewClient()
+        //webView!!.webViewClient= WebViewClient()
         webSettings.setSupportZoom(true)
+        webSettings.loadWithOverviewMode = true
         webSettings.builtInZoomControls = true
         webSettings.displayZoomControls = true
         webSettings.javaScriptEnabled = true
+        webSettings.useWideViewPort = true
+        webSettings.cacheMode = WebSettings.LOAD_NO_CACHE
+        webView!!.webChromeClient = MyWebChromeClient()
+        webView!!.webViewClient = WebClient()
         webView!!.loadUrl(menuList[currentMenuID].getUrlString())
 
         //renderWebPage(menuList[currentMenuID].getUrlString())
+
+        linearLayout!!.viewTreeObserver.addOnGlobalLayoutListener {
+            val r = Rect()
+            linearLayout!!.getWindowVisibleDisplayFrame(r)
+            val screenHeight = linearLayout!!.rootView.height
+            val keypadHeight = screenHeight - r.bottom
+            isKeyBoardShow = (keypadHeight > screenHeight * 0.15)
+
+
+        }
+
+        val filter: IntentFilter
+
+        mReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                if (intent.action != null) {
+                    if (intent.action!!.equals(Constants.ACTION.ACTION_WEBVIEW_GOBACK, ignoreCase = true)) {
+                        Log.d(mTag, "ACTION_WEBVIEW_GOBACK")
+
+                        if (webView!!.canGoBack()) {
+                            webView!!.goBack()
+                        } else {
+                            val goBackIntent = Intent()
+                            goBackIntent.action = Constants.ACTION.ACTION_WEBVIEW_CANNOT_GOBACK
+                            webviewContext!!.sendBroadcast(goBackIntent)
+                        }
+
+
+                    }
+                }
+            }
+        }
+
+        if (!isRegister) {
+            filter = IntentFilter()
+            filter.addAction(Constants.ACTION.ACTION_WEBVIEW_GOBACK)
+
+            webviewContext?.registerReceiver(mReceiver, filter)
+            isRegister = true
+            Log.d(mTag, "registerReceiver mReceiver")
+        }
 
         return view
     }
@@ -80,6 +151,46 @@ class FragmentWebview: Fragment()  {
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         Log.i(mTag, "onActivityCreated")
         super.onActivityCreated(savedInstanceState)
+
+    }
+
+    class MyWebChromeClient : WebChromeClient() {
+        override fun onProgressChanged(view: WebView, newProgress: Int) {
+            Log.i("===>$newProgress", "onProgressChanged")
+            if (newProgress < 100) {
+                webviewProgressBar!!.visibility = View.VISIBLE
+                webviewProgressBar!!.progress = newProgress
+            } else {
+                webviewProgressBar!!.visibility = View.GONE
+            }
+        }
+
+    }
+
+    class WebClient : WebViewClient() {
+        /*override fun shouldOverrideUrlLoading(
+            view: WebView,
+            url: String
+        ): Boolean {
+            view.loadUrl(url)
+            return true
+        }*/
+
+        override fun onPageFinished(view: WebView, url: String) {
+            super.onPageFinished(view, url)
+
+            Log.e("===>", "onPageFinished")
+
+            webviewProgressBar!!.visibility = View.GONE
+        }
+
+        override fun onPageCommitVisible(view: WebView?, url: String?) {
+            super.onPageCommitVisible(view, url)
+
+            Log.e("===>", "onPageCommitVisible")
+
+            webviewProgressBar!!.visibility = View.GONE
+        }
 
     }
 

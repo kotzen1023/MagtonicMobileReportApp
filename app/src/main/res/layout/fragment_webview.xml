@@ -7,10 +7,31 @@
         android:paddingTop="?attr/actionBarSize"
         android:id="@+id/webview_container">
 
-    <WebView
-            android:id="@+id/webView"
+
+
+    <LinearLayout
+            android:id="@+id/linearLayoutWebView"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            tools:layout_editor_absoluteY="8dp"
-            tools:layout_editor_absoluteX="8dp"/>
+            android:orientation="vertical"
+            android:focusableInTouchMode="true">
+
+        <ProgressBar
+                android:id="@+id/progressBar"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="20dp"
+                android:layout_marginTop="-8dp"
+                android:layout_marginBottom="-8dp"
+                android:progressTint="#FFEB3B" />
+
+        <WebView
+                android:id="@+id/webView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:layout_editor_absoluteY="8dp"
+                tools:layout_editor_absoluteX="8dp"/>
+    </LinearLayout>
+
+
 </RelativeLayout>

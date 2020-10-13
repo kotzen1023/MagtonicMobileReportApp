@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import android.util.Log
 import android.view.*
 import android.widget.*
+import androidx.core.text.HtmlCompat
 import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.isKeyBoardShow
 import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.screenHeight
 import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.screenWidth
@@ -194,12 +195,14 @@ class FragmentLogin: Fragment() {
     }
 
     private fun toast(message: String) {
-        val toast = Toast.makeText(loginContext, message, Toast.LENGTH_SHORT)
+        val toast = Toast.makeText(loginContext, HtmlCompat.fromHtml("<h1>$message</h1>", HtmlCompat.FROM_HTML_MODE_COMPACT), Toast.LENGTH_LONG)
+        toast.setGravity(Gravity.CENTER_HORIZONTAL or Gravity.CENTER_VERTICAL, 0, 0)
+        /*val toast = Toast.makeText(loginContext, message, Toast.LENGTH_SHORT)
         toast.setGravity(Gravity.CENTER_HORIZONTAL or Gravity.CENTER_VERTICAL, 0, 0)
         val group = toast.view as ViewGroup
         group.setBackgroundResource(R.drawable.toast_corner_round)
         val textView = group.getChildAt(0) as TextView
-        textView.textSize = 25.0f
+        textView.textSize = 25.0f*/
         toast.show()
     }
 }

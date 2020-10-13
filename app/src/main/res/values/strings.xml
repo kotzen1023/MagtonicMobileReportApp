@@ -11,6 +11,8 @@
     <string name="nav_others">Others</string>
     <string name="nav_greeting">Hi, %s</string>
     <string name="action_settings">Settings</string>
+    <string name="toast_network_error">Network error</string>
+    <string name="toast_server_error">Server error</string>
 
     <string name="menu_home">Home</string>
     <string name="menu_gallery">Gallery</string>
@@ -32,4 +34,5 @@
     <string name="logout_title">Log out</string>
     <string name="logout_title_msg">Log out from this account</string>
     <string name="ok">Ok</string>
+    <string name="login_fail">No Authority!</string>
 </resources>
