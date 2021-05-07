@@ -1,6 +1,6 @@
 package com.magtonic.magtonicmobilereportapp.api
 
-import android.content.Context
+
 import android.util.Log
 import com.magtonic.magtonicmobilereportapp.model.send.HttpUserAuthPara
 import okhttp3.Callback
@@ -10,7 +10,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 class ApiFunc {
-    private val mTAG = ApiFunc::class.java.name
+    //private val mTAG = ApiFunc::class.java.name
 
     //http://61.216.114.217/IoT/TonicDashBoardCatchValue.asp?A=[3],[6],[andychin],[abcd1234]
     //http://61.216.114.217/IoT/TonicDashBoardCatchValue.asp?A=[3],[6],[andychin],[abcd1234]

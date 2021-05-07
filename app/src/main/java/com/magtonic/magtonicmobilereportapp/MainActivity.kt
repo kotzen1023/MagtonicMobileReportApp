@@ -35,6 +35,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.core.content.res.ResourcesCompat
 import androidx.core.text.HtmlCompat
 import com.magtonic.magtonicmobilereportapp.api.ApiFunc
 import com.magtonic.magtonicmobilereportapp.data.Constants
@@ -104,13 +105,20 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.M)
         {
             windowManager.defaultDisplay.getMetrics(displayMetrics)
-        } else {
-            //mContext!!.display!!.getMetrics(displayMetrics)
+
+            screenHeight = displayMetrics.heightPixels
+            screenWidth = displayMetrics.widthPixels
+        } else if (Build.VERSION.SDK_INT > Build.VERSION_CODES.M && Build.VERSION.SDK_INT <= Build.VERSION_CODES.Q) {
             mContext!!.display!!.getRealMetrics(displayMetrics)
+
+            screenHeight = displayMetrics.heightPixels
+            screenWidth = displayMetrics.widthPixels
+        } else { //Android 11
+            //mContext!!.display!!.getMetrics(displayMetrics)
+            screenHeight = windowManager.currentWindowMetrics.bounds.height()
+            screenWidth = windowManager.currentWindowMetrics.bounds.width()
+
         }
-        //windowManager.defaultDisplay.getMetrics(displayMetrics)
-        screenHeight = displayMetrics.heightPixels
-        screenWidth = displayMetrics.widthPixels
 
         Log.e(mTag, "width = $screenWidth, height = $screenHeight")
 
@@ -194,14 +202,16 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             navView!!.menu.clear()
 
             navView!!.menu.add(R.id.headerMenuList, R.id.nav_setting, 0, getString(R.string.nav_setting))
-            val drawableSetting = resources.getDrawable(R.drawable.baseline_settings_black_48, mContext!!.theme)
+            //val drawableSetting = resources.getDrawable(R.drawable.baseline_settings_black_48, mContext!!.theme)
+            val drawableSetting = ResourcesCompat.getDrawable(resources, R.drawable.baseline_settings_black_48, mContext!!.theme)
             navView!!.menu.getItem(0).icon = drawableSetting
             navView!!.menu.getItem(0).isVisible = true
 
             //navView!!.menu.getItem( menuList.size).subMenu.getItem(0).icon = drawableSetting //setting
             //navView!!.menu.getItem( menuList.size).subMenu.getItem(0).isVisible = true
             navView!!.menu.add(R.id.headerMenuList, R.id.nav_logout, 0, getString(R.string.nav_logout))
-            val drawableLogout = resources.getDrawable(R.drawable.baseline_exit_to_app_black_48, mContext!!.theme)
+            //val drawableLogout = resources.getDrawable(R.drawable.baseline_exit_to_app_black_48, mContext!!.theme)
+            val drawableLogout = ResourcesCompat.getDrawable(resources, R.drawable.baseline_exit_to_app_black_48, mContext!!.theme)
             navView!!.menu.getItem(1).icon = drawableLogout
             navView!!.menu.getItem(1).isVisible = false
 
@@ -209,7 +219,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
             //navView!!.menu.getItem( menuList.size).subMenu.getItem(1).isVisible = false
 
             navView!!.menu.add(R.id.headerMenuList, R.id.nav_login, 0, getString(R.string.nav_login))
-            val drawableLogin = resources.getDrawable(R.drawable.baseline_touch_app_black_48, mContext!!.theme)
+            //val drawableLogin = resources.getDrawable(R.drawable.baseline_touch_app_black_48, mContext!!.theme)
+            val drawableLogin = ResourcesCompat.getDrawable(resources, R.drawable.baseline_touch_app_black_48, mContext!!.theme)
             navView!!.menu.getItem(2).icon = drawableLogin
             navView!!.menu.getItem(2).isVisible = true
 
@@ -249,134 +260,139 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
         mReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 if (intent.action != null) {
-                    if (intent.action!!.equals(Constants.ACTION.ACTION_LOGIN_ACTION, ignoreCase = true)) {
-                        Log.d(mTag, "ACTION_LOGIN_ACTION")
-                        account = intent.getStringExtra("account") as String
-                        password = intent.getStringExtra("password") as String
+                    when {
+                        intent.action!!.equals(Constants.ACTION.ACTION_LOGIN_ACTION, ignoreCase = true) -> {
+                            Log.d(mTag, "ACTION_LOGIN_ACTION")
+                            account = intent.getStringExtra("account") as String
+                            password = intent.getStringExtra("password") as String
 
-                        Log.e(mTag, "account = $account password $password")
+                            Log.e(mTag, "account = $account password $password")
 
-                        runOnUiThread {
-                            callAPILogin(account, password)
+                            runOnUiThread {
+                                callAPILogin(account, password)
+                            }
+
+
                         }
+                        intent.action!!.equals(Constants.ACTION.ACTION_LOGIN_NETWORK_ERROR, ignoreCase = true) -> {
+                            Log.d(mTag, "ACTION_LOGIN_NETWORK_ERROR")
 
 
+                        }
+                        intent.action!!.equals(Constants.ACTION.ACTION_LOGIN_SUCCESS, ignoreCase = true) -> {
+                            Log.d(mTag, "ACTION_LOGIN_SUCCESS")
+
+                            title = menuList[0].getHeader()
+
+                            //set username
+                            //textViewUserName!!.setText(getString(R.string.nav_greeting, username))
+                            //textViewUserName!!.text = getString(R.string.nav_greeting, username)
+                            //save to User
+                            user!!.userAccount = account
+                            user!!.password = password
+                            user!!.isLogin = true
+
+                            //hide keyboard
+                            Log.e(mTag, "isKeyBoardShow = $isKeyBoardShow")
+                            if (isKeyBoardShow)
+                                imm?.toggleSoftInput(InputMethodManager.RESULT_HIDDEN, 0)
+
+                            //save
+                            editor = pref!!.edit()
+                            editor!!.putString(User.USER_ACCOUNT, account)
+                            editor!!.putString(User.PASSWORD, password)
+                            editor!!.apply()
+
+                            //start with receipt fragment
+                            var webfragment: Fragment? = null
+                            val webFragmentClass = FragmentWebview::class.java
+
+                            try {
+                                webfragment = webFragmentClass.newInstance()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
 
 
+                            val webFragmentManager = supportFragmentManager
+                            //fragmentManager.beginTransaction().replace(R.id.flContent, fragment).commit();
+                            webFragmentManager.beginTransaction().replace(R.id.flContent, webfragment!!).commitAllowingStateLoss()
+
+                            navView!!.menu.getItem(0).isChecked = true
 
 
+                        }
+                        intent.action!!.equals(Constants.ACTION.ACTION_LOGIN_FAILED, ignoreCase = true) -> {
+                            Log.d(mTag, "ACTION_LOGIN_FAILED")
 
-                    } else if (intent.action!!.equals(Constants.ACTION.ACTION_LOGIN_NETWORK_ERROR, ignoreCase = true)) {
-                        Log.d(mTag, "ACTION_LOGIN_NETWORK_ERROR")
+
+                        }
+                        intent.action!!.equals(Constants.ACTION.ACTION_LOGOUT_ACTION, ignoreCase = true) -> {
+                            Log.d(mTag, "ACTION_LOGOUT_ACTION")
+
+                            //save to User
+                            user!!.userAccount = ""
+                            user!!.password = ""
+                            user!!.isLogin = false
+                            //saveRJStorageUpload
+                            editor = pref?.edit()
+                            editor?.putString(User.PASSWORD, "")
+                            editor?.putString(User.USER_ACCOUNT, "")
+                            editor?.apply()
+
+                            navView!!.menu.clear()
+
+                            navView!!.menu.add(R.id.headerMenuList, R.id.nav_setting, 0, getString(R.string.nav_setting))
+                            //val drawableSetting = resources.getDrawable(R.drawable.baseline_settings_black_48, mContext!!.theme)
+                            val drawableSetting = ResourcesCompat.getDrawable(resources, R.drawable.baseline_settings_black_48, mContext!!.theme)
+                            navView!!.menu.getItem(0).icon = drawableSetting
+                            navView!!.menu.getItem(0).isVisible = true
+
+                            navView!!.menu.add(R.id.headerMenuList, R.id.nav_logout, 0, getString(R.string.nav_logout))
+                            //val drawableLogout = resources.getDrawable(R.drawable.baseline_exit_to_app_black_48, mContext!!.theme)
+                            val drawableLogout = ResourcesCompat.getDrawable(resources, R.drawable.baseline_exit_to_app_black_48, mContext!!.theme)
+                            navView!!.menu.getItem(1).icon = drawableLogout
+                            navView!!.menu.getItem(1).isVisible = false
+
+                            navView!!.menu.add(R.id.headerMenuList, R.id.nav_login, 0, getString(R.string.nav_login))
+                            //val drawableLogin = resources.getDrawable(R.drawable.baseline_touch_app_black_48, mContext!!.theme)
+                            val drawableLogin = ResourcesCompat.getDrawable(resources, R.drawable.baseline_touch_app_black_48, mContext!!.theme)
+                            navView!!.menu.getItem(2).icon = drawableLogin
+                            navView!!.menu.getItem(2).isVisible = true
 
 
-                    } else if (intent.action!!.equals(Constants.ACTION.ACTION_LOGIN_SUCCESS, ignoreCase = true)) {
-                        Log.d(mTag, "ACTION_LOGIN_SUCCESS")
+                            currentFrag = CurrentFragment.LOGIN_FRAGMENT
 
-                        title = menuList[0].getHeader()
 
-                        //set username
-                        //textViewUserName!!.setText(getString(R.string.nav_greeting, username))
-                        //textViewUserName!!.text = getString(R.string.nav_greeting, username)
-                        //save to User
-                        user!!.userAccount = account
-                        user!!.password = password
-                        user!!.isLogin = true
+                            var loginFragment: Fragment? = null
+                            val loginFragmentClass = FragmentLogin::class.java
 
-                        //hide keyboard
-                        Log.e(mTag, "isKeyBoardShow = $isKeyBoardShow")
-                        if (isKeyBoardShow)
+                            try {
+                                loginFragment = loginFragmentClass.newInstance()
+                            } catch (e: Exception) {
+                                e.printStackTrace()
+                            }
+
+
+                            // Insert the fragment by replacing any existing fragment
+                            val loginFragmentManager = supportFragmentManager
+                            //fragmentManager.beginTransaction().replace(R.id.flContent, fragment).commit();
+                            loginFragmentManager.beginTransaction().replace(R.id.flContent, loginFragment!!).commitAllowingStateLoss()
+
+                            navView!!.menu.getItem(2).isChecked = true //login
+
+                            title = resources.getString(R.string.nav_login)
+                        }
+                        intent.action!!.equals(Constants.ACTION.ACTION_HIDE_KEYBOARD, ignoreCase = true) -> {
+                            Log.d(mTag, "ACTION_HIDE_KEYBOARD")
+
                             imm?.toggleSoftInput(InputMethodManager.RESULT_HIDDEN, 0)
-
-                        //save
-                        editor = pref!!.edit()
-                        editor!!.putString(User.USER_ACCOUNT, account)
-                        editor!!.putString(User.PASSWORD, password)
-                        editor!!.apply()
-
-                        //start with receipt fragment
-                        var fragment: Fragment? = null
-                        val fragmentClass = FragmentWebview::class.java
-
-                        try {
-                            fragment = fragmentClass.newInstance()
-                        } catch (e: Exception) {
-                            e.printStackTrace()
                         }
+                        intent.action!!.equals(Constants.ACTION.ACTION_WEBVIEW_CANNOT_GOBACK, ignoreCase = true) -> {
+                            Log.d(mTag, "ACTION_WEBVIEW_CANNOT_GOBACK")
 
-
-                        val fragmentManager = supportFragmentManager
-                        //fragmentManager.beginTransaction().replace(R.id.flContent, fragment).commit();
-                        fragmentManager.beginTransaction().replace(R.id.flContent, fragment!!).commitAllowingStateLoss()
-
-                        navView!!.menu.getItem(0).isChecked = true
-
-
-
-                    } else if (intent.action!!.equals(Constants.ACTION.ACTION_LOGIN_FAILED, ignoreCase = true)) {
-                        Log.d(mTag, "ACTION_LOGIN_FAILED")
-
-
-                    } else if (intent.action!!.equals(Constants.ACTION.ACTION_LOGOUT_ACTION, ignoreCase = true)) {
-                        Log.d(mTag, "ACTION_LOGOUT_ACTION")
-
-                        //save to User
-                        user!!.userAccount = ""
-                        user!!.password = ""
-                        user!!.isLogin = false
-                        //saveRJStorageUpload
-                        editor = pref?.edit()
-                        editor?.putString(User.PASSWORD, "")
-                        editor?.putString(User.USER_ACCOUNT, "")
-                        editor?.apply()
-
-                        navView!!.menu.clear()
-
-                        navView!!.menu.add(R.id.headerMenuList, R.id.nav_setting, 0, getString(R.string.nav_setting))
-                        val drawableSetting = resources.getDrawable(R.drawable.baseline_settings_black_48, mContext!!.theme)
-                        navView!!.menu.getItem(0).icon = drawableSetting
-                        navView!!.menu.getItem(0).isVisible = true
-
-                        navView!!.menu.add(R.id.headerMenuList, R.id.nav_logout, 0, getString(R.string.nav_logout))
-                        val drawableLogout = resources.getDrawable(R.drawable.baseline_exit_to_app_black_48, mContext!!.theme)
-                        navView!!.menu.getItem(1).icon = drawableLogout
-                        navView!!.menu.getItem(1).isVisible = false
-
-                        navView!!.menu.add(R.id.headerMenuList, R.id.nav_login, 0, getString(R.string.nav_login))
-                        val drawableLogin = resources.getDrawable(R.drawable.baseline_touch_app_black_48, mContext!!.theme)
-                        navView!!.menu.getItem(2).icon = drawableLogin
-                        navView!!.menu.getItem(2).isVisible = true
-
-
-                        currentFrag = CurrentFragment.LOGIN_FRAGMENT
-
-
-                        var fragment: Fragment? = null
-                        val fragmentClass = FragmentLogin::class.java
-
-                        try {
-                            fragment = fragmentClass.newInstance()
-                        } catch (e: Exception) {
-                            e.printStackTrace()
+                            showExitConfirmDialog()
                         }
-
-
-                        // Insert the fragment by replacing any existing fragment
-                        val fragmentManager = supportFragmentManager
-                        //fragmentManager.beginTransaction().replace(R.id.flContent, fragment).commit();
-                        fragmentManager.beginTransaction().replace(R.id.flContent, fragment!!).commitAllowingStateLoss()
-
-                        navView!!.menu.getItem(2).isChecked = true //login
-
-                        title = resources.getString(R.string.nav_login)
-                    } else if (intent.action!!.equals(Constants.ACTION.ACTION_HIDE_KEYBOARD, ignoreCase = true)) {
-                        Log.d(mTag, "ACTION_HIDE_KEYBOARD")
-
-                        imm?.toggleSoftInput(InputMethodManager.RESULT_HIDDEN, 0)
-                    } else if (intent.action!!.equals(Constants.ACTION.ACTION_WEBVIEW_CANNOT_GOBACK, ignoreCase = true)) {
-                        Log.d(mTag, "ACTION_WEBVIEW_CANNOT_GOBACK")
-
-                        showExitConfirmDialog();
                     }
                 }
 
@@ -654,10 +670,9 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                         //navView!!.menu.add(menuList[i].getHeader())
                         navView!!.menu.add(R.id.headerMenuList, i, 0, menuList[i].getHeader())
 
-                        val drawable = resources.getDrawable(
-                            R.drawable.baseline_link_black_48,
-                            mContext!!.theme
-                        )
+                        //val drawable = resources.getDrawable(R.drawable.baseline_link_black_48, mContext!!.theme)
+                        val drawable = ResourcesCompat.getDrawable(resources, R.drawable.baseline_link_black_48, mContext!!.theme)
+
                         navView!!.menu.getItem(i).icon = drawable
                         //navView!!.menu.add(R.id.headerMenuList, i, 0, (menuList[i].getHeader()))
 
@@ -669,10 +684,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                         0,
                         getString(R.string.nav_setting)
                     )
-                    val drawableSetting = resources.getDrawable(
-                        R.drawable.baseline_settings_black_48,
-                        mContext!!.theme
-                    )
+                    //val drawableSetting = resources.getDrawable(R.drawable.baseline_settings_black_48, mContext!!.theme)
+                    val drawableSetting = ResourcesCompat.getDrawable(resources, R.drawable.baseline_settings_black_48, mContext!!.theme)
                     navView!!.menu.getItem(menuList.size).icon = drawableSetting
                     navView!!.menu.getItem(menuList.size).isVisible = true
 
@@ -684,10 +697,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                         0,
                         getString(R.string.nav_logout)
                     )
-                    val drawableLogout = resources.getDrawable(
-                        R.drawable.baseline_exit_to_app_black_48,
-                        mContext!!.theme
-                    )
+                    //val drawableLogout = resources.getDrawable(R.drawable.baseline_exit_to_app_black_48, mContext!!.theme)
+                    val drawableLogout = ResourcesCompat.getDrawable(resources, R.drawable.baseline_exit_to_app_black_48, mContext!!.theme)
                     navView!!.menu.getItem(menuList.size + 1).icon = drawableLogout
                     navView!!.menu.getItem(menuList.size + 1).isVisible = true
 
@@ -700,10 +711,8 @@ class MainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelecte
                         0,
                         getString(R.string.nav_logout)
                     )
-                    val drawableLogin = resources.getDrawable(
-                        R.drawable.baseline_touch_app_black_48,
-                        mContext!!.theme
-                    )
+                    //val drawableLogin = resources.getDrawable(R.drawable.baseline_touch_app_black_48, mContext!!.theme)
+                    val drawableLogin = ResourcesCompat.getDrawable(resources, R.drawable.baseline_touch_app_black_48, mContext!!.theme)
                     navView!!.menu.getItem(menuList.size + 2).icon = drawableLogin
                     navView!!.menu.getItem(menuList.size + 2).isVisible = false
 
