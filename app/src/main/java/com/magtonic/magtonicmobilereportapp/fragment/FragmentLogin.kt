@@ -12,13 +12,16 @@ import android.util.Log
 import android.view.*
 import android.widget.*
 import androidx.core.text.HtmlCompat
+
+import androidx.lifecycle.LifecycleObserver
+
 import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.isKeyBoardShow
 import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.screenHeight
 import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.screenWidth
 import com.magtonic.magtonicmobilereportapp.R
 import com.magtonic.magtonicmobilereportapp.data.Constants
 
-class FragmentLogin: Fragment() {
+class FragmentLogin: Fragment(), LifecycleObserver {
     private val mTag = FragmentLogin::class.java.name
     private var loginContext: Context? = null
 
@@ -188,10 +191,9 @@ class FragmentLogin: Fragment() {
         super.onDestroyView()
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
-        Log.i(mTag, "onActivityCreated")
-        super.onActivityCreated(savedInstanceState)
-
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        activity?.lifecycle?.addObserver(this)
     }
 
     private fun toast(message: String) {

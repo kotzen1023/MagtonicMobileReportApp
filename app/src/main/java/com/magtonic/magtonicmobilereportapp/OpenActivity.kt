@@ -165,6 +165,7 @@ class OpenActivity: AppCompatActivity() {
         requestCode: Int,
         permissions: Array<String>, grantResults: IntArray
     ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
         Log.d(mTag, "Permission callback called-------")
         when (requestCode) {
@@ -242,15 +243,14 @@ class OpenActivity: AppCompatActivity() {
                             || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)
                             || ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_COARSE_LOCATION)*/
                         ) {
-                            showDialogOK(
-                                DialogInterface.OnClickListener { _, which ->
-                                    when (which) {
-                                        DialogInterface.BUTTON_POSITIVE -> checkAndRequestPermissions()
-                                        DialogInterface.BUTTON_NEGATIVE ->
-                                            // proceed with logic by disabling the related features or quit the app.
-                                            finish()
-                                    }
-                                })
+                            showDialogOK { _, which ->
+                                when (which) {
+                                    DialogInterface.BUTTON_POSITIVE -> checkAndRequestPermissions()
+                                    DialogInterface.BUTTON_NEGATIVE ->
+                                        // proceed with logic by disabling the related features or quit the app.
+                                        finish()
+                                }
+                            }
                         } else {
                             Toast.makeText(this, "Go to settings and enable permissions", Toast.LENGTH_LONG)
                                 .show()

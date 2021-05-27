@@ -24,6 +24,7 @@ import android.widget.LinearLayout
 
 import android.widget.RelativeLayout
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.LifecycleObserver
 import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.currentMenuID
 import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.isKeyBoardShow
 import com.magtonic.magtonicmobilereportapp.MainActivity.Companion.menuList
@@ -32,7 +33,7 @@ import com.magtonic.magtonicmobilereportapp.R
 import com.magtonic.magtonicmobilereportapp.data.Constants
 
 
-class FragmentWebview: Fragment()  {
+class FragmentWebview: Fragment(), LifecycleObserver {
     private val mTag = FragmentWebview::class.java.name
     private var webviewContext: Context? = null
 
@@ -148,10 +149,15 @@ class FragmentWebview: Fragment()  {
         super.onDestroyView()
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
+    /*override fun onActivityCreated(savedInstanceState: Bundle?) {
         Log.i(mTag, "onActivityCreated")
         super.onActivityCreated(savedInstanceState)
 
+    }*/
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        activity?.lifecycle?.addObserver(this)
     }
 
     class MyWebChromeClient : WebChromeClient() {

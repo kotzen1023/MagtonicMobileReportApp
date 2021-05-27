@@ -12,11 +12,12 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.lifecycle.LifecycleObserver
 
 import com.magtonic.magtonicmobilereportapp.R
 
 
-class FragmentSetting : Fragment() {
+class FragmentSetting : Fragment(), LifecycleObserver {
     private val mTag = FragmentSetting::class.java.name
 
     private var settingContext: Context? = null
@@ -73,10 +74,15 @@ class FragmentSetting : Fragment() {
         super.onDestroyView()
     }
 
-    override fun onActivityCreated(savedInstanceState: Bundle?) {
+    /*override fun onActivityCreated(savedInstanceState: Bundle?) {
         Log.i(mTag, "onActivityCreated")
         super.onActivityCreated(savedInstanceState)
 
+    }*/
+
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        activity?.lifecycle?.addObserver(this)
     }
 
     /*fun toast(message: String) {
